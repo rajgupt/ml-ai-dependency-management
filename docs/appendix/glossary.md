@@ -1,7 +1,5 @@
 # Glossary 🟢
 
-<!-- WRITE: keep every entry to two sentences maximum. Terms used in this book only. -->
-
 **Abstract dependency** — what your project *supports*, written as a range in `pyproject.toml`.
 
 **Concrete dependency** — what a specific run *used*, written as an exact version + hash in a lockfile.
