@@ -2,9 +2,6 @@
 
 Every recipe in the book, on one page. This is the page to bookmark.
 
-<!-- WRITE: fill in as modules are written. Table: Recipe | Command / pattern | Module | Badge.
-     Group by task, not by module — the reader arrives here with a problem, not a chapter number. -->
-
 ## Starting a project
 
 | I want to… | Do this | Where |
@@ -49,3 +46,6 @@ Every recipe in the book, on one page. This is the page to bookmark.
 | Make the notebook use the project env | register the venv kernel | [M7](07-reproducibility.md) |
 | Check for known vulnerabilities | `uvx pip-audit` | [M8](08-supply-chain.md) |
 | Upgrade one package safely | `uv lock --upgrade-package <pkg>` | [M8](08-supply-chain.md) |
+| Generate an SBOM | `uvx --from cyclonedx-bom cyclonedx-py environment .venv` | [Lab 3](labs/lab-3.md) |
+| Read a lock diff after an upgrade | `git diff uv.lock` | [Lab 3](labs/lab-3.md) |
+| Pin a base image immutably | digest, not tag: `python:3.12-slim@sha256:…` | [Lab 3](labs/lab-3.md) |

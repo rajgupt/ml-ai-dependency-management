@@ -62,9 +62,9 @@ Under construction. [`COURSE-PLAN.md`](COURSE-PLAN.md) is the curriculum design.
 |---|---|
 | Curriculum, timings, reading list | done |
 | Book scaffold, `SUMMARY.md`, PDF pipeline | done |
-| Labs 1 & 2 — briefs and working example repos | done |
-| Lab 3 — brief written, example repo | brief only |
-| Modules M0–M8 — outlines in place, prose | outlines only |
+| Labs 1, 2 & 3 — briefs and working example repos | done |
+| Modules M0–M8 — outlines and full prose | done |
+| Diagrams (four-layer stack, non-Python decision tree) | done |
 
 ## Building the book locally
 

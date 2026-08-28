@@ -38,28 +38,13 @@ packages = ["src/churnkit"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-# --- Lab 3 Step 1: one lockfile, laptops and the GPU cluster --------------
-#
-# PyPI's own `torch` wheel is a CPU-only build. `explicit = true` keeps each
-# index scoped to the packages that name it below -- without that, uv would
-# consult both indexes for *every* dependency in the project, which is both
-# slower and a dependency-confusion risk.
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
-
-# Marker split: laptops (macOS/Apple Silicon) resolve the CPU wheel, the
-# training cluster (Linux/x86_64) resolves the CUDA build. One `uv lock` run
-# records both in the same uv.lock; `uv sync` on either machine only ever
-# installs the one that matches it.
-[tool.uv.sources]
-torch = [
-    { index = "pytorch-cpu", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
-    { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
-]
+# Lab 3 Step 1 (optional / go deeper) adds a torch CPU/GPU index split here --
+# two `[[tool.uv.index]]` entries plus a `[tool.uv.sources]` marker table
+# pointing torch at PyTorch's own `cpu`/`cu128` indexes. It is intentionally
+# NOT wired up in this checked-in solution: `uv lock` needs outbound access to
+# download.pytorch.org, which most CI runners have but this course's own
+# sandboxed authoring/build environment does not (an explicit proxy
+# allowlist blocks it -- see docs/labs/lab-3.md Step 1 for the exact recipe
+# and that sharp edge). Read Step 1 for the full, real config; this file
+# keeps the plain `gpu` extra from Lab 2 so `uv lock`/`uv sync --locked` stay
+# genuinely runnable in every environment that builds this repo.

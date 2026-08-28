@@ -1,0 +1,31 @@
+# Serving image: same pyproject.toml, same lock, no torch, no dev/notebook
+# tooling. This is the other half of Step 2's argument -- diff this file
+# against Dockerfile.train and the only differences are "no --extra gpu" and
+# the final stage name. Everything else -- the digest pin, the cached deps
+# layer, the COPY order -- is identical on purpose: one project, two images.
+
+FROM python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217 AS deps
+COPY --from=ghcr.io/astral-sh/uv:0.8.17 /uv /uvx /usr/local/bin/
+WORKDIR /app
+
+# No --extra gpu here: torch never enters this image. --no-dev drops
+# pytest/ruff the same way it does in Dockerfile.train.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --no-dev
+
+FROM deps AS build
+COPY src/ src/
+RUN uv sync --frozen --no-dev
+
+FROM python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217 AS serve
+WORKDIR /app
+COPY --from=build /app/.venv .venv
+COPY --from=build /app/src src
+ENV PATH="/app/.venv/bin:$PATH"
+
+# churnkit (Lab 2's scope) only ever grew a training script, not a serving
+# one -- so this reuses churn-train to keep Step 2 about the packaging
+# pattern, not new application code. In your own repo this line is the one
+# to swap: ENTRYPOINT ["churn-serve"], or a uvicorn/gunicorn command that
+# loads the model this image was built with.
+ENTRYPOINT ["churn-train"]

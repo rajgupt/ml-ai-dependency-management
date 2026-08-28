@@ -249,16 +249,16 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 | Phase | Output | Est. | Status |
 |---|---|---|---|
 | 1 | Repo scaffold: `SUMMARY.md`, `book.json`, empty module pages with the page template, CI skeleton | 0.5 d | **done** |
-| 2 | Example repos for Labs 1–3 (starter + solution branches), tested end-to-end | 1.5 d | Labs 1–2 **done**, Lab 3 pending |
-| 3 | Write Parts I–III against the labs (labs first, prose second — keeps it practical) | 3 d | outlines in place |
-| 4 | Diagrams (four-layer stack, wheel tags, non-Python decision tree), checklist, cheat sheet | 1 d | not started |
+| 2 | Example repos for Labs 1–3 (starter + solution branches), tested end-to-end | 1.5 d | **done** |
+| 3 | Write Parts I–III against the labs (labs first, prose second — keeps it practical) | 3 d | **done** |
+| 4 | Diagrams (four-layer stack, wheel tags, non-Python decision tree), checklist, cheat sheet | 1 d | **done** |
 | 5 | PDF pipeline + link/command CI, timing dry-run with 2 pilot readers | 0.5 d | CI **done**, dry-run pending |
 
 **Definition of done:** a pilot reader with no packaging background finishes the core path in under 3 hours, and their own repo scores ≥ 8/12 on the Dependency Health Checklist afterwards.
 
 ## 7. Open decisions
 
-1. **Host:** GitBook.com Git Sync (recommended) vs self-hosted HonKit only?
-2. **Lab domain:** tabular churn model (fast, tiny deps) — recommended — vs a small LLM fine-tune (more relatable, much heavier downloads and GPU-dependent).
-3. **Lab 3 GPU access:** assume none and teach the marker split as *configuration only* (recommended, keeps it laptop-runnable), or provide a Colab/cloud path?
-4. **Windows/WSL support** in the labs: first-class or "use WSL"?
+1. ~~**Host:** GitBook.com Git Sync (recommended) vs self-hosted HonKit only?~~ **Resolved:** GitBook.com Git Sync, connected against `master`.
+2. ~~**Lab domain:** tabular churn model (fast, tiny deps) — recommended — vs a small LLM fine-tune.~~ **Resolved:** tabular churn model (`churnkit`), used across all three labs.
+3. ~~**Lab 3 GPU access:** assume none and teach the marker split as *configuration only*, or provide a Colab/cloud path?~~ **Resolved:** no GPU assumed; the marker split is taught as configuration, validated via `uv sync --dry-run` rather than a real cluster.
+4. **Windows/WSL support** in the labs: first-class or "use WSL"? — still open.

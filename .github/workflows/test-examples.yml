@@ -59,6 +59,26 @@ jobs:
           uv pip install --python proof "$GITHUB_WORKSPACE"/examples/lab2-package/solution/dist/churnkit-*.whl
           ./proof/bin/churn-train --rows 2000
 
+  lab3:
+    name: Lab 3 · ship it
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/lab3-ship/solution
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      # Step 2 (Dockerfile.train/.serve) and Step 4 (the upgrade ritual /
+      # planted scikit-learn break, over in examples/lab3-ship/starter) are
+      # documented and manually verified in the lab, but not CI-gated here --
+      # building two images and re-running a dependency upgrade on every push
+      # is more than this job needs to prove the package itself is sound.
+
   no-sys-path:
     name: No sys.path hacks
     runs-on: ubuntu-latest

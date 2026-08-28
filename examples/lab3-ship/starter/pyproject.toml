@@ -1,12 +1,14 @@
 [project]
 name = "churnkit"
 version = "0.1.0"
-description = "Lab 2 - a notebook, refactored into an installable package."
+description = "Lab 3 - churnkit, as it lands on your desk on Monday morning."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pandas>=2.2",
-    "scikit-learn>=1.5",
+    # Pinned to an old release on purpose -- see Lab 3 Step 4 (the upgrade
+    # ritual). `uv lock --upgrade-package scikit-learn` is the fix.
+    "scikit-learn>=1.3",
 ]
 
 # EXTRAS ship with the package. A user opts in: `pip install churnkit[gpu]`.

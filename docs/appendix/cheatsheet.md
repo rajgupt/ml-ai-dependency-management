@@ -1,7 +1,5 @@
 # uv cheat sheet 🟢
 
-<!-- WRITE: one printable page. Keep it to commands actually used in this book. -->
-
 ## Project
 
 ```bash

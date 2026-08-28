@@ -1,0 +1,32 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # Fails loudly if pyproject.toml and uv.lock disagree -- the single
+      # most common mistake this job exists to catch. See Lab 3 Step 3.
+      - run: uv sync --locked
+
+      - run: uv run pytest -q
+      - run: uv run ruff check .
+
+      # Known-vulnerability scan of the resolved dependency tree.
+      - run: uvx pip-audit
+
+      # CycloneDX SBOM for the model service, attached to the run.
+      - name: Generate SBOM
+        run: |
+          uvx --from cyclonedx-bom cyclonedx-py environment .venv \
+            --pyproject pyproject.toml -o sbom.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json

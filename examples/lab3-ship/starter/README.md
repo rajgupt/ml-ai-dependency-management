@@ -11,7 +11,7 @@ upgrade that quietly moves the model's AUC.
 
 ```bash
 uv sync
-uv run churn-train --rows 8000     # test AUC: 0.7506
+uv run churn-train --rows 8000     # test AUC: 0.7473 (scikit-learn 1.3.2 -- see Step 4)
 uv run pytest -q                   # passes
 ```
 
