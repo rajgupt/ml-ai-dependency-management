@@ -1,0 +1,51 @@
+name: book
+
+# Builds the HTML book and the downloadable PDF with HonKit -- the maintained
+# fork of GitBook Legacy, which reads the same SUMMARY.md and book.json.
+# GitBook.com hosting (via Git Sync) is configured outside this repo; this
+# workflow is what produces the offline PDF and catches broken structure.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/honkit/honkit:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build HTML
+        run: honkit build . _book
+
+      - name: Build PDF
+        run: honkit pdf . dependency-cookbook.pdf
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-cookbook
+          path: |
+            _book/
+            dependency-cookbook.pdf
+
+      - name: Attach the PDF to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dependency-cookbook.pdf
+
+  links:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --accept 200,206,429 './**/*.md'
+          fail: true

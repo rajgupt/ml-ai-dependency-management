@@ -1,0 +1,39 @@
+[project]
+name = "churnkit"
+version = "0.1.0"
+description = "Lab 2 - a notebook, refactored into an installable package."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+]
+
+# EXTRAS ship with the package. A user opts in: `pip install churnkit[gpu]`.
+[project.optional-dependencies]
+gpu = ["torch>=2.6"]
+
+# The console script. This is what your Dockerfile CMD and your scheduler call.
+[project.scripts]
+churn-train = "churnkit.cli:main"
+
+# GROUPS (PEP 735) never ship. Only people working on this repo see them.
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+notebook = [
+    "ipykernel>=6.29",
+    "nbstripout>=0.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/churnkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
