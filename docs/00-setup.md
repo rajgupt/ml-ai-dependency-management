@@ -43,7 +43,8 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 pip install uv
 ```
 
-Then the 5-minute win:
+Then the 5-minute win (🪟 **Windows:** use PowerShell 7+; `&&` and `>>` work
+there. See [How to use this book](how-to-use.md#windows-users)):
 
 ```bash
 uv init --python 3.12 demo && cd demo
@@ -74,6 +75,12 @@ Commit the first three. Never the fourth:
 ```bash
 git add pyproject.toml uv.lock .python-version
 echo ".venv/" >> .gitignore
+```
+
+```powershell
+# 🪟 PowerShell
+git add pyproject.toml uv.lock .python-version
+Add-Content .gitignore ".venv/"
 ```
 
 That's it — a colleague who clones this repo and runs `uv sync` gets the

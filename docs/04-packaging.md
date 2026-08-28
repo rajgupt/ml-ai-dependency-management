@@ -1,6 +1,10 @@
 # M4 · Ship your project as a package 🔵
 
 > ⏱ 25 minutes · Route: Full, Fast
+>
+> 🪟 **Windows:** all `uv` and `git` commands here are identical. One shell
+> block below has a PowerShell variant. See
+> [How to use this book](how-to-use.md#windows-users).
 
 ## 3 a.m. story
 
@@ -181,6 +185,14 @@ your source tree:
 ```bash
 cd /tmp && uv venv proof && uv pip install --python proof dist/churnkit-0.1.0-py3-none-any.whl
 ./proof/bin/churn-train --rows 2000
+```
+
+```powershell
+# 🪟 PowerShell
+cd $env:TEMP
+uv venv proof
+uv pip install --python proof $HOME\...\dist\churnkit-0.1.0-py3-none-any.whl
+.\proof\Scripts\churn-train.exe --rows 2000
 ```
 
 If `churn-train` runs from a directory that has never heard of your repo,

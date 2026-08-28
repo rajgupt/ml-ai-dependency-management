@@ -2,6 +2,10 @@
 
 > ⏱ 20 minutes · Needs: `uv`. No GPU.
 > Start in [`examples/lab2-package/starter/`](../../examples/lab2-package/starter/README.md)
+>
+> 🪟 **Windows:** runs natively, no WSL. Command blocks are `bash`; a
+> **PowerShell** block follows wherever the syntax differs. See
+> [How to use this book](../how-to-use.md#windows-users).
 
 ## The brief
 
@@ -28,6 +32,17 @@ pytest, from a container and from a colleague's laptop, and the
 ```bash
 cd examples/lab2-package/starter
 mkdir -p src/churnkit tests
+uv init --bare --python 3.12
+uv python pin 3.12
+uv add "pandas>=2.2" "scikit-learn>=1.5"
+uv add --group dev pytest ruff
+uv add --group notebook ipykernel nbstripout
+```
+
+```powershell
+# 🪟 PowerShell — only the mkdir line differs; the uv commands are identical
+cd examples\lab2-package\starter
+New-Item -ItemType Directory -Force src\churnkit, tests | Out-Null
 uv init --bare --python 3.12
 uv python pin 3.12
 uv add "pandas>=2.2" "scikit-learn>=1.5"
@@ -202,6 +217,15 @@ cd /tmp && uv venv proof && uv pip install --python proof \
 ./proof/bin/churn-train --rows 2000
 ```
 
+```powershell
+# 🪟 PowerShell — note the Scripts\ path and .exe suffix
+cd $env:TEMP
+uv venv proof
+uv pip install --python proof `
+  C:\path\to\examples\lab2-package\starter\dist\churnkit-0.1.0-py3-none-any.whl
+.\proof\Scripts\churn-train.exe --rows 2000
+```
+
 The console script runs, from a directory that has never heard of your repo.
 That is what "pip installable" actually buys you.
 
@@ -209,6 +233,11 @@ Finally, the check that matters:
 
 ```bash
 grep -rn "sys.path" src tests notebooks
+```
+
+```powershell
+# 🪟 PowerShell
+Select-String -Path src\*,tests\*,notebooks\* -Pattern "sys.path" -Recurse
 ```
 
 Nothing. Compare against your `git diff` — you deleted three lines of

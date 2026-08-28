@@ -1,6 +1,12 @@
 # uv cheat sheet 🟢
 
-<!-- WRITE: one printable page. Keep it to commands actually used in this book. -->
+Every command on this page is identical on macOS, Linux, and native Windows —
+`uv` normalises the differences. The only platform-specific notes:
+
+- **Windows:** run these in PowerShell (7+). The venv's scripts live in
+  `.venv\Scripts\` (not `.venv/bin/`); `uv run` hides that from you.
+- **Windows markers:** 64-bit Windows is `sys_platform == "win32"` and
+  `platform_machine == "AMD64"` — see [M6](../06-gpu-and-system-deps.md).
 
 ## Project
 
