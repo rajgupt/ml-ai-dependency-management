@@ -14,13 +14,15 @@
 
 * [M4 · Ship your project as a package](docs/04-packaging.md)
 * [🧪 Lab 2 · Notebook → installable package](docs/labs/lab-2.md)
-* [M6 · GPUs, CUDA & non-Python dependencies](docs/06-gpu-and-system-deps.md)
 
 ## Part III — Make it survive
 
 * [M7 · Reproducibility beyond pip](docs/07-reproducibility.md)
 * [M8 · Supply chain & upgrade hygiene](docs/08-supply-chain.md)
-* [🧪 Lab 3 · Ship it and keep it alive](docs/labs/lab-3.md)
+
+## Optional deep-dives
+
+* [M6 · GPUs, CUDA & non-Python dependencies](docs/06-gpu-and-system-deps.md)
 
 ## Appendix
 

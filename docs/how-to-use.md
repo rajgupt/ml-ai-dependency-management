@@ -14,9 +14,12 @@ Pick one. Every page is badged so you can tell what applies to you.
 
 | Route | Who it's for | Time | Path |
 |---|---|---|---|
-| **Full** | New to Python packaging | ~3 h | M0 → M8, all three labs |
-| **Fast** | Senior engineers who just want the recipes | ~75 min | M2, M4, M6, Lab 1, Checklist |
+| **Full** | New to Python packaging | ~3 h | M0 → M8, both labs |
+| **Fast** | Senior engineers who just want the recipes | ~75 min | M2, M4, Lab 1, Checklist |
 | **Notebook-first** | Analysts and researchers | ~90 min | M0, M1, M2, Lab 1, M7 |
+
+**M6 · GPUs, CUDA & non-Python dependencies** is an optional deep-dive, not on
+any core route. Read it when you hit a GPU, CUDA, or system-library problem.
 
 ## Page shape
 
@@ -35,13 +38,15 @@ Every module page has the same six sections, so you can skim to the part you nee
 - `uv` — [installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
 - Git
 
-No GPU is required. Lab 3 teaches GPU dependency *configuration*, which you can
-write and validate on a laptop.
+No GPU is required. The optional [M6](06-gpu-and-system-deps.md) deep-dive
+teaches GPU dependency *configuration*, which you can write and validate on a
+laptop.
 
 ## Windows users
 
 **The whole core path (M0–M8, Labs 1 and 2) runs on native Windows — no WSL
-required.** `uv` is a first-class Windows tool and every `uv` command in this
+required.** The optional [M6](06-gpu-and-system-deps.md) deep-dive works
+natively too. `uv` is a first-class Windows tool and every `uv` command in this
 book is identical on all three platforms.
 
 The only things that differ are the handful of *shell* commands around the `uv`
@@ -68,7 +73,7 @@ in the Windows blocks assume it. It ships with Windows 10 and 11.
 
 ## The labs
 
-The three labs live in [`examples/`](../examples/lab1-bootstrap/starter/README.md).
+Both labs live in [`examples/`](../examples/lab1-bootstrap/starter/README.md).
 Each has a `starter/` you work in and a `solution/` you compare against. They
 build on each other, but each `starter/` is self-contained — you can start at
 Lab 2 without doing Lab 1.
