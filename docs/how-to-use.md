@@ -41,7 +41,7 @@ write and validate on a laptop.
 
 ## The labs
 
-The three labs live in [`examples/`](https://github.com/rajgupt/ml-ai-dependency-management/tree/master/examples).
+The three labs live in [`examples/`](../examples/lab1-bootstrap/starter/README.md).
 Each has a `starter/` you work in and a `solution/` you compare against. They
 build on each other, but each `starter/` is self-contained — you can start at
 Lab 2 without doing Lab 1.

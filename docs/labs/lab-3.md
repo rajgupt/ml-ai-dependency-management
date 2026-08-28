@@ -7,7 +7,7 @@
 > Needs: `uv`, Docker. **No GPU** — you write and validate the GPU dependency
 > *configuration* on a laptop, which is the part that actually goes wrong.
 >
-> Status: **example repo not built yet** (see [COURSE-PLAN.md](https://github.com/rajgupt/ml-ai-dependency-management/blob/master/COURSE-PLAN.md) phase 2).
+> Status: **example repo not built yet** (see [COURSE-PLAN.md](../../COURSE-PLAN.md) phase 2).
 > This page is the brief; `examples/lab3-ship/` is coming.
 
 ## The brief

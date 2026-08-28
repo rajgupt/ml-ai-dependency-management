@@ -1,7 +1,7 @@
 # 🧪 Lab 2 · Notebook → installable package 🟢🔵
 
 > ⏱ 20 minutes · Needs: `uv`. No GPU.
-> Start in [`examples/lab2-package/starter/`](https://github.com/rajgupt/ml-ai-dependency-management/tree/master/examples/lab2-package/starter)
+> Start in [`examples/lab2-package/starter/`](../../examples/lab2-package/starter/README.md)
 
 ## The brief
 

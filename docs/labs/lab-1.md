@@ -1,7 +1,7 @@
 # 🧪 Lab 1 · Zero to reproducible in ten commands 🟢
 
 > ⏱ 20 minutes · Needs: `uv`, a terminal. No GPU, no downloads beyond PyPI.
-> Start in [`examples/lab1-bootstrap/starter/`](https://github.com/rajgupt/ml-ai-dependency-management/tree/master/examples/lab1-bootstrap/starter)
+> Start in [`examples/lab1-bootstrap/starter/`](../../examples/lab1-bootstrap/starter/README.md)
 
 ## The brief
 

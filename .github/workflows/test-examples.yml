@@ -65,11 +65,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # The starter notebook is allowed to be bad -- that is the lesson. Nothing else is.
+      #
+      # Two details this guard got wrong the first time, both worth keeping:
+      #   * the trailing "(" -- the labs *discuss* sys.path.append in prose, and a guard
+      #     that cannot tell a call from a sentence fails on its own documentation;
+      #   * git grep, not grep -r -- it searches tracked files only, so a local .venv
+      #     full of pytest's own sys.path handling can never trip it.
       - name: Fail if a solution reintroduces a sys.path hack
         run: |
-          if grep -rn "sys\.path\.\(append\|insert\)" \
-              --include="*.py" --include="*.ipynb" \
-              examples/*/solution; then
+          if git grep -n "sys\.path\.\(append\|insert\)(" -- \
+              'examples/*/solution/**/*.py' 'examples/*/solution/**/*.ipynb'; then
             echo "::error::A solution contains a sys.path hack. That is the thing the book tells people to delete."
             exit 1
           fi
