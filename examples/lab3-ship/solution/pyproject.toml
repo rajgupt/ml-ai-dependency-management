@@ -1,7 +1,7 @@
 [project]
 name = "churnkit"
 version = "0.1.0"
-description = "Lab 2 - a notebook, refactored into an installable package."
+description = "Lab 3 - churnkit, shipped: GPU/CPU split, containers, CI, an upgrade ritual."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -37,3 +37,29 @@ packages = ["src/churnkit"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# --- Lab 3 Step 1: one lockfile, laptops and the GPU cluster --------------
+#
+# PyPI's own `torch` wheel is a CPU-only build. `explicit = true` keeps each
+# index scoped to the packages that name it below -- without that, uv would
+# consult both indexes for *every* dependency in the project, which is both
+# slower and a dependency-confusion risk.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+# Marker split: laptops (macOS/Apple Silicon) resolve the CPU wheel, the
+# training cluster (Linux/x86_64) resolves the CUDA build. One `uv lock` run
+# records both in the same uv.lock; `uv sync` on either machine only ever
+# installs the one that matches it.
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+]
