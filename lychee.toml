@@ -1,0 +1,19 @@
+# lychee link-checker configuration
+# https://github.com/lycheeverse/lychee
+
+# Retry transient failures before giving up
+max_retries = 3
+retry_wait_time = 2
+
+# Be patient with slow hosts (seconds)
+timeout = 30
+
+# Treat these HTTP statuses as success
+accept = [200, 206, 429]
+
+# Hosts that are live but rate-limit or stall from CI runners.
+exclude = [
+  # The Turing Way book — large Jupyter Book behind a CDN that
+  # intermittently times out / drops connections from GitHub runners.
+  '^https://book\.the-turing-way\.org',
+]
