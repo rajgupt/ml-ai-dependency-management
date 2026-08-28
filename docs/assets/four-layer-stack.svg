@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 460" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="760" height="460" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="380" y="28" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a1a">The four-layer stack</text>
+
+  <!-- Layer 4: Python packages -->
+  <rect x="60" y="52" width="480" height="76" rx="6" fill="#cfe3fb" stroke="#1e40af" stroke-width="2"/>
+  <text x="80" y="82" font-size="15" font-weight="700" fill="#12315c">Layer 4 &#8212; Python packages</text>
+  <text x="80" y="104" font-size="13" fill="#1e3a5f">numpy, torch, transformers, scikit-learn&#8230;</text>
+  <text x="560" y="96" font-size="13" font-weight="600" fill="#1e40af">controlled by pip / uv</text>
+
+  <!-- Arrow 4 -> 3 -->
+  <line x1="300" y1="128" x2="300" y2="150" stroke="#4b5563" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Layer 3: Python interpreter -->
+  <rect x="60" y="150" width="480" height="76" rx="6" fill="#cfe3fb" stroke="#1e40af" stroke-width="2"/>
+  <text x="80" y="180" font-size="15" font-weight="700" fill="#12315c">Layer 3 &#8212; Python interpreter</text>
+  <text x="80" y="202" font-size="13" fill="#1e3a5f">CPython 3.12, the exact build you run</text>
+  <text x="560" y="194" font-size="13" font-weight="600" fill="#1e40af">controlled by uv</text>
+
+  <!-- Arrow 3 -> 2 -->
+  <line x1="300" y1="226" x2="300" y2="248" stroke="#4b5563" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Layer 2: System libraries -->
+  <rect x="60" y="248" width="480" height="76" rx="6" fill="#fde3c2" stroke="#b45309" stroke-width="2"/>
+  <text x="80" y="278" font-size="15" font-weight="700" fill="#7c3e0a">Layer 2 &#8212; System libraries</text>
+  <text x="80" y="300" font-size="13" fill="#7c3e0a">CUDA runtime, glibc, BLAS, ffmpeg, libGL</text>
+  <text x="560" y="292" font-size="13" font-weight="600" fill="#b45309">not pip's job</text>
+
+  <!-- Arrow 2 -> 1 -->
+  <line x1="300" y1="324" x2="300" y2="346" stroke="#4b5563" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Layer 1: Hardware & driver -->
+  <rect x="60" y="346" width="480" height="76" rx="6" fill="#fde3c2" stroke="#b45309" stroke-width="2"/>
+  <text x="80" y="376" font-size="15" font-weight="700" fill="#7c3e0a">Layer 1 &#8212; Hardware &amp; driver</text>
+  <text x="80" y="398" font-size="13" fill="#7c3e0a">nvidia driver, CPU architecture</text>
+  <text x="560" y="390" font-size="13" font-weight="600" fill="#b45309">fixed by the machine</text>
+
+  <!-- Caption -->
+  <text x="380" y="448" text-anchor="middle" font-size="13" fill="#374151" font-style="italic">
+    Most ML breakage lives below the layer pip controls.
+  </text>
+</svg>
