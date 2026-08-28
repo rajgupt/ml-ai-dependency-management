@@ -15,7 +15,7 @@
 | **Prereqs** | Can write Python, has used `pip` and a notebook. No packaging knowledge assumed. |
 | **Duration** | **≤ 3 hours** total. Core path ≈ 155 min; Lab 3 is a 25-min stretch/take-home. |
 | **Format** | Self-paced, read-and-do. Every module ends in a copy-pasteable **Recipe Card**. |
-| **Promise** | By the end you can bootstrap, package, lock, containerize and audit an ML project — and hand it to a colleague who reproduces it on the first try. |
+| **Promise** | By the end you can bootstrap, package, lock and audit an ML project — and hand it to a colleague who reproduces it on the first try. |
 
 ### Design principles
 
@@ -87,9 +87,8 @@ The module that makes the course ML-specific rather than generic Python.
 - CUDA **driver vs runtime vs toolkit**; what `nvidia-smi` actually tells you; why `pip install torch` gives one teammate a 2 GB CPU build and another a broken CUDA build.
 - **Wheel tags & environment markers** (PEP 508): `cp312-manylinux_x86_64` vs `macosx_arm64` — "installs on my Mac, fails on the cluster", explained in one table.
 - Recipe: pin a torch variant with `[[tool.uv.index]] explicit = true` + `[tool.uv.sources]`, and a marker-split so laptops get CPU wheels and the cluster gets `cu128`. Note the sharp edge: `--torch-backend=auto` works with `uv pip …`, not with `uv add/lock/sync`.
-- **Non-Python dependencies** (ffmpeg, libGL, tesseract, NCCL, MKL): decision tree → *system package* vs *conda/**pixi*** vs *container*. One page, no religion.
-- **Docker recipe**: multi-stage build, `uv sync --frozen --no-dev --no-install-project` for a cached dependency layer, slim runtime image, separate **train vs serve** environments (your serving image should not contain Jupyter).
-- Base-image pinning by digest, not tag. 🔴
+- **Non-Python dependencies** (ffmpeg, libGL, tesseract, NCCL, MKL): decision tree → *system package* vs *conda/**pixi*** vs *deploy image*. One page, no religion.
+- **Deploy-image recipe (concepts only, no Dockerfile):** install deps from the lockfile before the project source for a cached dependency layer (`uv sync --frozen --no-dev --no-install-project`), slim runtime image, separate **train vs serve** environments (your serving image should not contain Jupyter), base image pinned by digest not tag. 🔴
 
 ### Part III — Make it survive *(40 min + stretch lab)*
 
@@ -141,10 +140,9 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 
 ### 🧪 Lab 3 — Ship it and keep it alive *(25 min, stretch, 🔵🔴)*
 1. Add `torch` with a CPU/GPU index split so laptop and cluster resolve differently from **one** lockfile.
-2. Multi-stage `Dockerfile` with a cached `uv sync --frozen --no-dev` layer; compare image sizes train vs serve.
-3. GitHub Actions: cached `uv sync --locked` (fails the build if the lock is stale) + `pytest` + `pip-audit` + CycloneDX SBOM upload.
-4. Run `uv lock --upgrade-package scikit-learn`, read the lock diff, and fix the deliberately planted breakage.
-*Learner walks away with:* a CI + container template and the upgrade ritual.
+2. GitHub Actions: cached `uv sync --locked` (fails the build if the lock is stale) + `pytest` + `pip-audit` + CycloneDX SBOM upload.
+3. Run `uv lock --upgrade-package scikit-learn`, read the lock diff, and fix the deliberately planted breakage.
+*Learner walks away with:* a CI template and the upgrade ritual.
 
 ---
 
@@ -240,7 +238,6 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 - [DVC docs](https://dvc.org/doc) — data/model versioning
 - [pixi](https://pixi.sh/) and [conda-lock](https://conda.github.io/conda-lock/) — for the non-Python-dependency escape hatch
 - [pip-audit](https://github.com/pypa/pip-audit) · [OSV](https://osv.dev/) · [CycloneDX Python](https://github.com/CycloneDX/cyclonedx-python)
-- [Docker multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
 
 ---
 

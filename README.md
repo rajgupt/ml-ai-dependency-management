@@ -47,7 +47,7 @@ requirements" keeps failing you, and it's the idea every module hangs off.
 |---|---|---|
 | [1 · Zero to reproducible](docs/labs/lab-1.md) | A locked environment you destroy and rebuild byte-for-byte | 20 min |
 | [2 · Notebook → package](docs/labs/lab-2.md) | A messy notebook refactored into a pip-installable package | 20 min |
-| [3 · Ship it and keep it alive](docs/labs/lab-3.md) | GPU/CPU split, containers, CI, an upgrade that breaks | 25 min |
+| [3 · Ship it and keep it alive](docs/labs/lab-3.md) | GPU/CPU split from one lockfile, CI, an upgrade that breaks | 25 min |
 
 Code lives in [`examples/`](examples/lab1-bootstrap/starter/README.md). Every solution is built and run in CI, so
 the commands in this book are not aspirational.

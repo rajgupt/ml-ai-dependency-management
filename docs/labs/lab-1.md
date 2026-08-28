@@ -2,6 +2,10 @@
 
 > ⏱ 20 minutes · Needs: `uv`, a terminal. No GPU, no downloads beyond PyPI.
 > Start in [`examples/lab1-bootstrap/starter/`](../../examples/lab1-bootstrap/starter/README.md)
+>
+> 🪟 **Windows:** runs natively, no WSL. Command blocks are `bash`; a
+> **PowerShell** block follows wherever the syntax differs. See
+> [How to use this book](../how-to-use.md#windows-users).
 
 ## The brief
 
@@ -27,6 +31,12 @@ Look at what appeared:
 ```bash
 ls -a
 cat pyproject.toml
+```
+
+```powershell
+# 🪟 PowerShell
+Get-ChildItem -Force
+Get-Content pyproject.toml
 ```
 
 - **`pyproject.toml`** — what this project *supports*. You edit this. Note that
@@ -94,10 +104,21 @@ of `source .venv/bin/activate` is most of what makes this stick.
 uv pip freeze | sort > /tmp/before.txt
 ```
 
+```powershell
+# 🪟 PowerShell
+uv pip freeze | Sort-Object | Set-Content $env:TEMP\before.txt
+```
+
 ## Step 6 — Destroy it
 
 ```bash
 rm -rf .venv
+uv run python train.py
+```
+
+```powershell
+# 🪟 PowerShell
+Remove-Item -Recurse -Force .venv
 uv run python train.py
 ```
 
@@ -109,6 +130,12 @@ about a second.
 ```bash
 uv pip freeze | sort > /tmp/after.txt
 diff /tmp/before.txt /tmp/after.txt && echo "identical"
+```
+
+```powershell
+# 🪟 PowerShell
+uv pip freeze | Sort-Object | Set-Content $env:TEMP\after.txt
+if (-not (Compare-Object (Get-Content $env:TEMP\before.txt) (Get-Content $env:TEMP\after.txt))) { "identical" }
 ```
 
 Empty diff. This is the whole point of the lab: **`uv.lock` + `uv sync` is a
@@ -166,6 +193,18 @@ cat > .gitignore <<'GITIGNORE'
 __pycache__/
 metrics.json
 GITIGNORE
+
+git add pyproject.toml uv.lock .python-version .gitignore train.py tests/
+git status
+```
+
+```powershell
+# 🪟 PowerShell
+@'
+.venv/
+__pycache__/
+metrics.json
+'@ | Set-Content .gitignore
 
 git add pyproject.toml uv.lock .python-version .gitignore train.py tests/
 git status

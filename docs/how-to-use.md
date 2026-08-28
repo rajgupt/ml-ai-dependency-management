@@ -34,10 +34,37 @@ Every module page has the same six sections, so you can skim to the part you nee
 - Python 3.11+ (the labs pin 3.12; `uv` will fetch it for you)
 - `uv` — [installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
 - Git
-- Docker (Lab 3 only — skip it and you still get the configuration lesson)
 
 No GPU is required. Lab 3 teaches GPU dependency *configuration*, which you can
 write and validate on a laptop.
+
+## Windows users
+
+**The whole core path (M0–M8, Labs 1 and 2) runs on native Windows — no WSL
+required.** `uv` is a first-class Windows tool and every `uv` command in this
+book is identical on all three platforms.
+
+The only things that differ are the handful of *shell* commands around the `uv`
+calls — deleting a folder, writing a file, comparing two files. Command blocks
+are written for `bash` (macOS/Linux). Where a block uses shell syntax that
+PowerShell doesn't share, a **🪟 PowerShell** block follows it with the exact
+equivalent. Two standing translations, so we don't repeat them everywhere:
+
+| bash | PowerShell |
+|---|---|
+| `rm -rf .venv` | `Remove-Item -Recurse -Force .venv` |
+| `cat file` | `Get-Content file` |
+| `/tmp/x` | `$env:TEMP\x` |
+| `./proof/bin/churn-train` | `.\proof\Scripts\churn-train.exe` |
+| `cmd1 && cmd2` | `cmd1; if ($?) { cmd2 }` |
+
+One more Windows-only detail, and it matters for [M6](06-gpu-and-system-deps.md):
+Windows reports its CPU architecture as `AMD64`, not `x86_64`. When you write a
+[PEP 508](https://peps.python.org/pep-0508/) marker to select a wheel, use
+`platform_machine == 'AMD64'` for 64-bit Windows.
+
+Use **PowerShell**, not the old `cmd.exe` — the here-strings and `Get-Content`
+in the Windows blocks assume it. It ships with Windows 10 and 11.
 
 ## The labs
 

@@ -3,6 +3,9 @@
 > ⏱ 25 minutes · Route: Full, Fast
 >
 > This is the module that makes this an *ML* course. Layers 1 and 2 of the stack.
+>
+> 🪟 **Windows:** the `uv` config here works natively — with one marker
+> difference (Windows is `win32` / `AMD64`, called out below).
 
 ## 3 a.m. story
 
@@ -79,7 +82,7 @@ platform:
 | Marker | Answers | Typical use in ML |
 |---|---|---|
 | `sys_platform` | `"linux"`, `"darwin"`, `"win32"` | route macOS to a CPU wheel, Linux to a CUDA one |
-| `platform_machine` | `"x86_64"`, `"arm64"`, `"aarch64"` | tell a cluster x86 box apart from a Jetson or Apple Silicon laptop |
+| `platform_machine` | `"x86_64"`, `"arm64"`, `"aarch64"`, `"AMD64"` | tell a cluster x86 box apart from a Jetson or Apple Silicon laptop |
 | `python_version` | `"3.11"`, `"3.12"`, … | drop a dependency that doesn't yet support your interpreter |
 
 | Machine | `sys_platform` | `platform_machine` | typically resolves to |
@@ -87,10 +90,16 @@ platform:
 | MacBook (Apple Silicon) | `darwin` | `arm64` | CPU-only torch wheel |
 | Training cluster node | `linux` | `x86_64` | `cu128` (or whichever CUDA build) torch wheel |
 | ARM inference box / Jetson | `linux` | `aarch64` | a Linux ARM wheel, if one is published — often not for GPU builds |
+| Windows workstation | `win32` | `AMD64` | a Windows CUDA wheel (`cu121`/`cu128`) or the CPU build |
 
 One `pyproject.toml`, one `uv.lock`, and every platform in that table
 resolves to the wheel that actually fits it. Recipe 2 below is exactly this
 table turned into config.
+
+> 🪟 **Windows markers gotcha.** 64-bit Windows reports `sys_platform == "win32"`
+> (yes, even on 64-bit) and `platform_machine == "AMD64"` (not `"x86_64"`). A
+> marker written for Linux won't match a Windows box — spell out the Windows
+> case explicitly, as Recipe 2 does below.
 
 ## 🍳 Recipe 1 — pin a torch variant explicitly
 
@@ -142,15 +151,21 @@ explicit = true
 torch = [
     { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
     { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
 ]
 ```
+
+The third line is the Windows case: a native-Windows workstation with an NVIDIA
+GPU pulls the same `cu128` build from PyTorch's Windows index. Drop that line if
+your Windows users are CPU-only — they'll fall through to the default CPU wheel.
 
 ```bash
 uv lock
 ```
 
-Run that once and `uv.lock` records *both* resolutions — the CPU wheel for
-`darwin` and the `cu128` wheel for `linux`/`x86_64` — in the same file. Then:
+Run that once and `uv.lock` records *all* the resolutions — the CPU wheel for
+`darwin`, the `cu128` wheel for `linux`/`x86_64`, and the Windows `cu128` wheel —
+in the same file. Then:
 
 ```bash
 # on a MacBook
@@ -221,73 +236,43 @@ there is. If you're not already committed to conda for a real reason (step 3
 above), skip it — plain `uv` plus system packages is simpler and reproduces
 better.
 
-## 🍳 Recipe 4 — the Dockerfile 🔵🔴
+## 🍳 Recipe 4 — the deploy image 🔵🔴
 
-```dockerfile
-# --- deps stage: resolve + install dependencies, cached separately from source ---
-FROM python:3.12-slim@sha256:6f2e...ab13 AS deps
-COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /uvx /usr/local/bin/
-WORKDIR /app
+When Recipe 3 sends you to "bake an image," three things carry over from
+everything else in this book. (The mechanics of *how* you build the image —
+Dockerfile, or whatever your platform uses — are out of scope here; these are
+the dependency-management decisions inside it.)
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+**Pin the base image by digest, not by tag.** A tag like `python:3.12-slim`
+is a moving target — the same tag points at a different image next week when a
+base-OS patch lands. A digest (`python:3.12-slim@sha256:...`) is immutable:
+that digest is that exact image, forever. Resolve it once and commit it like
+you'd commit a lockfile — because it is one, for layer 1 of the stack.
 
-# --- build stage: add source, install the project itself ---
-FROM deps AS build
-COPY src/ src/
-RUN uv sync --frozen --no-dev
-
-# --- runtime: nothing but the venv and the source ---
-FROM python:3.12-slim@sha256:6f2e...ab13 AS train
-WORKDIR /app
-COPY --from=build /app/.venv .venv
-COPY --from=build /app/src src
-ENV PATH="/app/.venv/bin:$PATH"
-ENTRYPOINT ["churn-train"]
-```
-
-Two things do the real work here.
-
-**Base image pinned by digest, not tag.** `python:3.12-slim` is a moving
-target — the same tag points at a different image next week when a base-OS
-patch lands. `python:3.12-slim@sha256:...` is immutable: that digest is that
-exact image, forever. Resolve the digest once (`docker pull python:3.12-slim
-&& docker inspect --format='{{index .RepoDigests 0}}' python:3.12-slim`) and
-commit it like you'd commit a lockfile — because it is one, for layer 1 of
-the stack.
-
-**The dependency layer is copied and installed *before* source.**
-`COPY pyproject.toml uv.lock ./` then `uv sync --frozen --no-install-project`
-installs every dependency but deliberately skips the project itself
-(`--no-install-project`) — there's no source yet to install. Docker caches
-layers by their inputs, so as long as `pyproject.toml`/`uv.lock` don't
-change, that layer is reused untouched no matter how many times `src/`
-changes. Only the `build` stage — the one that actually copies `src/` — reruns
-on every code edit, and it's fast because dependencies are already sitting in
-the venv from the cached layer. This one reordering is what takes a CI build
-from "6 minutes, every time" to "40 seconds, most of the time." Get the
-`COPY` order backwards — source before deps — and every commit invalidates
-every layer.
-
-`--frozen` means install exactly what's in `uv.lock`, no re-resolution;
+**Install dependencies from the lockfile, before the project source.**
+Copy `pyproject.toml` and `uv.lock` and run `uv sync --frozen
+--no-install-project` first — that installs every dependency but skips the
+project itself. Then add `src/` and run `uv sync --frozen` to install the
+project. Every image build system caches by input, so keeping the dependency
+step separate from and ahead of the source means a code edit doesn't reinstall
+torch. `--frozen` means install exactly what's in `uv.lock`, no re-resolution;
 `--no-dev` drops the `dev` group (pytest, ruff — see [M4](04-packaging.md)
 and [M2](02-uv.md)) so it never reaches the image at all.
 
-**Train vs serve are different images, not the same image with more in it.**
-The runtime stage above copies only the venv and `src/` — no compiler, no
-`uv`, no Jupyter, nothing from the `dev` or `notebook` groups. A serving
-image narrows further still: skip the `[gpu]`/training-only extras it
-doesn't need, and its `ENTRYPOINT` calls a `serve` console script instead of
-`churn-train`. The difference shows up on disk — a training image carrying
-CUDA wheels and dev tooling commonly runs 6–8 GB; a slim CPU inference image
-built the same way can sit under 500 MB. Every package in that gap is attack
-surface and pull-time you're paying for on every replica, for no reason a
-serving request ever uses.
+**Train and serve are different images, not one image with more in it.**
+A serving image doesn't need the compiler, `uv`, Jupyter, or the
+`dev`/`notebook` groups — and it can skip the `[gpu]`/training-only extras
+too, calling a `serve` console script instead of `churn-train`. The
+difference shows up on disk: a training image carrying CUDA wheels and dev
+tooling commonly runs 6–8 GB; a slim CPU inference image built the same way
+can sit under 500 MB. Every package in that gap is attack surface and
+pull-time you pay for on every replica, for no reason a serving request ever
+uses.
 
-`ENTRYPOINT ["churn-train"]` — not `["python", "src/cli.py"]` — is the same
-console script from [M4 Recipe 4](04-packaging.md): it exists because the
-package is installed, it's versioned with the image, and it doesn't care
-what `WORKDIR` Docker happened to leave you in.
+Use a console script (`churn-train`, from [M4 Recipe 4](04-packaging.md)) as
+the image's entrypoint, not `python src/cli.py`: it exists because the package
+is installed, it's versioned with the image, and it doesn't care what working
+directory the runtime left you in.
 
 ## ✅ Check yourself
 

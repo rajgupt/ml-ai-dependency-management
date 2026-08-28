@@ -66,6 +66,15 @@ uvx pip-audit --path .venv
 uv pip list --outdated
 ```
 
+```powershell
+# 🪟 PowerShell — no process substitution; write the export to a temp file
+uv export --no-hashes -o $env:TEMP\req.txt
+uvx pip-audit -r $env:TEMP\req.txt
+
+uvx pip-audit --path .venv
+uv pip list --outdated
+```
+
 `pip-audit` checks resolved versions against the
 [OSV](https://osv.dev/) database and flags known CVEs, including ones in
 transitive dependencies you never import directly. Not every finding is
