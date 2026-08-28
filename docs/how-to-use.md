@@ -14,12 +14,18 @@ Pick one. Every page is badged so you can tell what applies to you.
 
 | Route | Who it's for | Time | Path |
 |---|---|---|---|
-| **Full** | New to Python packaging | ~3 h | M0 → M8, both labs |
-| **Fast** | Senior engineers who just want the recipes | ~75 min | M2, M4, Lab 1, Checklist |
-| **Notebook-first** | Analysts and researchers | ~90 min | M0, M1, M2, Lab 1, M7 |
+| **Full** | New to Python packaging | ~90 min | M0 → M4, both labs |
+| **Fast** | Senior engineers who just want the recipes | ~50 min | M2, M4, Lab 1, Checklist |
+| **Notebook-first** | Analysts and researchers | ~70 min | M0, M1, M2, Lab 1 |
 
-**M6 · GPUs, CUDA & non-Python dependencies** is an optional deep-dive, not on
-any core route. Read it when you hit a GPU, CUDA, or system-library problem.
+Three modules sit outside every core route as **optional deep-dives** — read each
+when the problem it solves actually lands on you:
+
+| Module | Read it when |
+|---|---|
+| [M6 · GPUs, CUDA & non-Python dependencies](06-gpu-and-system-deps.md) | a GPU, CUDA, or system-library install breaks |
+| [M7 · Reproducibility beyond pip](07-reproducibility.md) | an experiment needs to reproduce months later |
+| [M8 · Supply chain & upgrade hygiene](08-supply-chain.md) | you own a repo's dependencies and their upgrades |
 
 ## Page shape
 
@@ -44,10 +50,10 @@ laptop.
 
 ## Windows users
 
-**The whole core path (M0–M8, Labs 1 and 2) runs on native Windows — no WSL
-required.** The optional [M6](06-gpu-and-system-deps.md) deep-dive works
-natively too. `uv` is a first-class Windows tool and every `uv` command in this
-book is identical on all three platforms.
+**The whole core path (M0–M4, Labs 1 and 2) runs on native Windows — no WSL
+required**, and so do the optional M6–M8 deep-dives. `uv` is a first-class
+Windows tool and every `uv` command in this book is identical on all three
+platforms.
 
 The only things that differ are the handful of *shell* commands around the `uv`
 calls — deleting a folder, writing a file, comparing two files. Command blocks

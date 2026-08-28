@@ -4,7 +4,7 @@
 >
 > This is the module that makes this an *ML* course. Layers 1 and 2 of the stack.
 > Read it when you actually hit a GPU, CUDA, or system-library problem; the core
-> path (M0–M8, Labs 1–2) does not depend on it.
+> path (M0–M4, Labs 1–2) does not depend on it.
 >
 > 🪟 **Windows:** the `uv` config here works natively — with one marker
 > difference (Windows is `win32` / `AMD64`, called out below).

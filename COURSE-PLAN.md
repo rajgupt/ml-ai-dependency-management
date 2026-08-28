@@ -13,7 +13,7 @@
 | **Subtitle** | Stop shipping "works on my machine" models. |
 | **Audience** | Working data scientists, ML engineers, MLOps/platform engineers. Mixed seniority (0–15 yrs). |
 | **Prereqs** | Can write Python, has used `pip` and a notebook. No packaging knowledge assumed. |
-| **Duration** | **≤ 3 hours** total. Core path ≈ 130 min; M6 (GPU/CUDA) is an optional ~25-min deep-dive. |
+| **Duration** | Core path ≈ 95 min; M6–M8 are optional deep-dives (~25 + 15 + 12 min) you read as needed. |
 | **Format** | Self-paced, read-and-do. Every module ends in a copy-pasteable **Recipe Card**. |
 | **Promise** | By the end you can bootstrap, package, lock and audit an ML project — and hand it to a colleague who reproduces it on the first try. |
 
@@ -35,12 +35,16 @@ Each recipe carries a level badge, and the ToC offers three routes:
 
 | Route | Who | Time | Path |
 |---|---|---|---|
-| **Full** | DS/MLE new to packaging | ~3 h | M0 → M8 + Labs 1–2 |
-| **Fast** | Senior engineers | ~75 min | M2, M4 + Lab 1 + Checklist |
-| **Notebook-first** | Analysts / researchers | ~90 min | M0, M1, M2, Lab 1, M5, M7 |
+| **Full** | DS/MLE new to packaging | ~95 min | M0 → M4 + Labs 1–2 |
+| **Fast** | Senior engineers | ~50 min | M2, M4 + Lab 1 + Checklist |
+| **Notebook-first** | Analysts / researchers | ~70 min | M0, M1, M2, Lab 1, M5 |
 
-**M6 · GPUs, CUDA & non-Python dependencies** sits outside these routes as an
-optional deep-dive — read it when a GPU/CUDA/system-library problem actually bites.
+**M6–M8 are optional deep-dives**, outside every core route — read each when the
+problem it solves lands on you:
+
+- **M6 · GPUs, CUDA & non-Python dependencies** — a GPU/CUDA/system-library install breaks.
+- **M7 · Reproducibility beyond pip** — an experiment needs to reproduce months later.
+- **M8 · Supply chain & upgrade hygiene** — you own a repo's dependencies and their upgrades.
 
 ---
 
@@ -84,27 +88,14 @@ Install `uv`. Run one command that creates a fully pinned, GPU-aware environment
 
 **M5 · 🧪 Lab 2 — "Notebook → installable package"** — 20 min 🟢🔵
 
-### Part III — Make it survive *(40 min)*
-
-**M7 · Reproducibility beyond pip** — 15 min 🟢
-*Concepts & recipes:*
-- **The reproducibility ladder**: same lock → same env; same env + seed → *usually* same metrics. Honest treatment of nondeterminism (cuDNN kernel selection, atomics, TF32, thread counts, `torch.use_deterministic_algorithms`).
-- **Models and data are dependencies too**: pin Hugging Face artifacts by commit SHA (`revision=`), never `main`; version datasets with DVC / lakeFS / object-store paths that include a hash; record the model registry version alongside the lockfile.
-- **Notebook hygiene**: kernel ≠ project env (register the venv kernel), no `!pip install` in cells, `nbstripout` in pre-commit, `jupytext` for reviewable diffs, `papermill` for parameterized runs.
-- **The run manifest**: lock hash + git SHA + data version + image digest, emitted with every training run. This is the single habit that makes an experiment reproducible six months later.
-
-**M8 · Supply chain & upgrade hygiene** — 12 min 🟢🔵🔴
-*Concepts & recipes:*
-- ML-specific attack surface: **`pickle` / `torch.load` is arbitrary code execution** → prefer `safetensors`, use `weights_only=True`; a model download from a hub is untrusted code, not data.
-- PyPI typosquatting and **dependency confusion** with internal package names; why `--index-strategy` and explicit index pinning matter for private registries. 🔴
-- Auditing: `pip-audit` / `uv pip audit`, OSV, hash-pinned installs, **SBOM** generation (CycloneDX) for the model service.
-- **Upgrade ritual**: Renovate/Dependabot on a schedule, `uv lock --upgrade-package X`, review the lock diff like code, canary env + eval-set regression check before merging a `transformers` bump.
-- Pinning policy: when upper bounds help and when they poison the ecosystem (linked debate, both sides).
+### Wrap-up *(3 min)*
 
 **M10 · Recipe index + Dependency Health Checklist** — 3 min 🟢
 Every recipe card collected on one page + a scored checklist to run against a real repo.
 
 ### Optional deep-dives *(not on the core path)*
+
+Each is self-contained. Read it when the problem it solves actually lands on you.
 
 **M6 · Hard mode: GPUs, CUDA and non-Python dependencies** — 25 min 🔵🔴
 The module that makes the course ML-specific rather than generic Python. Read it
@@ -116,7 +107,24 @@ when a GPU, CUDA, or system-library problem actually bites.
 - **Non-Python dependencies** (ffmpeg, libGL, tesseract, NCCL, MKL): decision tree → *system package* vs *conda/**pixi*** vs *deploy image*. One page, no religion.
 - **Deploy-image recipe (concepts only, no Dockerfile):** install deps from the lockfile before the project source for a cached dependency layer (`uv sync --frozen --no-dev --no-install-project`), slim runtime image, separate **train vs serve** environments (your serving image should not contain Jupyter), base image pinned by digest not tag. 🔴
 
-**Core total: 130 min. M6 optional deep-dive: +25 min.**
+**M7 · Reproducibility beyond pip** — 15 min 🟢
+Read it when an experiment needs to reproduce months later.
+*Concepts & recipes:*
+- **The reproducibility ladder**: same lock → same env; same env + seed → *usually* same metrics. Honest treatment of nondeterminism (cuDNN kernel selection, atomics, TF32, thread counts, `torch.use_deterministic_algorithms`).
+- **Models and data are dependencies too**: pin Hugging Face artifacts by commit SHA (`revision=`), never `main`; version datasets with DVC / lakeFS / object-store paths that include a hash; record the model registry version alongside the lockfile.
+- **Notebook hygiene**: kernel ≠ project env (register the venv kernel), no `!pip install` in cells, `nbstripout` in pre-commit, `jupytext` for reviewable diffs, `papermill` for parameterized runs.
+- **The run manifest**: lock hash + git SHA + data version + image digest, emitted with every training run. This is the single habit that makes an experiment reproducible six months later.
+
+**M8 · Supply chain & upgrade hygiene** — 12 min 🟢🔵🔴
+Read it when you own a repo's dependencies and their upgrades.
+*Concepts & recipes:*
+- ML-specific attack surface: **`pickle` / `torch.load` is arbitrary code execution** → prefer `safetensors`, use `weights_only=True`; a model download from a hub is untrusted code, not data.
+- PyPI typosquatting and **dependency confusion** with internal package names; why `--index-strategy` and explicit index pinning matter for private registries. 🔴
+- Auditing: `pip-audit` / `uv pip audit`, OSV, hash-pinned installs, **SBOM** generation (CycloneDX) for the model service.
+- **Upgrade ritual**: Renovate/Dependabot on a schedule, `uv lock --upgrade-package X`, review the lock diff like code, canary env + eval-set regression check before merging a `transformers` bump.
+- Pinning policy: when upper bounds help and when they poison the ecosystem (linked debate, both sides).
+
+**Core total: ~95 min. Optional deep-dives M6–M8: +52 min.**
 
 ---
 
@@ -187,11 +195,10 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 * Part II — Make it yours
   * [M4 · Ship your project as a package](docs/04-packaging.md)
   * [🧪 Lab 2 · Notebook → package](docs/labs/lab-2.md)
-* Part III — Make it survive
-  * [M7 · Reproducibility beyond pip](docs/07-reproducibility.md)
-  * [M8 · Supply chain & upgrade hygiene](docs/08-supply-chain.md)
 * Optional deep-dives
   * [M6 · GPUs, CUDA & non-Python deps](docs/06-gpu-and-system-deps.md)
+  * [M7 · Reproducibility beyond pip](docs/07-reproducibility.md)
+  * [M8 · Supply chain & upgrade hygiene](docs/08-supply-chain.md)
 * Appendix
   * [Recipe index](docs/10-recipe-index.md)
   * [Dependency Health Checklist](docs/appendix/checklist.md)
@@ -244,11 +251,11 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 |---|---|---|---|
 | 1 | Repo scaffold: `SUMMARY.md`, `book.json`, empty module pages with the page template, CI skeleton | 0.5 d | **done** |
 | 2 | Example repos for Labs 1–2 (starter + solution branches), tested end-to-end | 1.5 d | Labs 1–2 **done** |
-| 3 | Write Parts I–III against the labs (labs first, prose second — keeps it practical) | 3 d | outlines in place |
+| 3 | Write the core path (Parts I–II) against the labs, then the M6–M8 deep-dives | 3 d | outlines in place |
 | 4 | Diagrams (four-layer stack, wheel tags, non-Python decision tree), checklist, cheat sheet | 1 d | not started |
 | 5 | PDF pipeline + link/command CI, timing dry-run with 2 pilot readers | 0.5 d | CI **done**, dry-run pending |
 
-**Definition of done:** a pilot reader with no packaging background finishes the core path in under 3 hours, and their own repo scores ≥ 8/12 on the Dependency Health Checklist afterwards.
+**Definition of done:** a pilot reader with no packaging background finishes the core path (M0–M4 + Labs 1–2) in about 90 minutes, and their own repo scores ≥ 8/12 on the Dependency Health Checklist afterwards.
 
 ## 7. Open decisions
 

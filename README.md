@@ -13,7 +13,7 @@ This book fixes those, in under three hours, with commands you can paste.
 
 ## What you get
 
-- **6 short core modules**, one theory chapter, everything else recipes — plus an optional GPU/CUDA deep-dive
+- **4 short core modules**, one theory chapter, everything else recipes — plus three optional deep-dives (GPU/CUDA, reproducibility, supply chain)
 - **2 hands-on labs** with starter and solution repos that actually run
 - A **[Dependency Health Checklist](docs/appendix/checklist.md)** to score your own repo on Monday
 - A **[recipe index](docs/10-recipe-index.md)** and a **[uv cheat sheet](docs/appendix/cheatsheet.md)** to keep
@@ -62,8 +62,8 @@ Under construction. [`COURSE-PLAN.md`](COURSE-PLAN.md) is the curriculum design.
 | Curriculum, timings, reading list | done |
 | Book scaffold, `SUMMARY.md`, PDF pipeline | done |
 | Labs 1 & 2 — briefs and working example repos | done |
-| Modules M0–M8 — outlines in place, prose | outlines only |
-| M6 (optional GPU/CUDA deep-dive) — outline | outline only |
+| Core modules M0–M4 — outlines in place, prose | outlines only |
+| Optional deep-dives M6–M8 — outlines | outlines only |
 
 ## Building the book locally
 

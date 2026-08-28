@@ -1,6 +1,9 @@
 # M7 · Reproducibility beyond pip 🟢
 
-> ⏱ 15 minutes · Route: Full, Notebook-first
+> ⏱ 15 minutes · **Optional deep-dive** — not on the core path
+>
+> Read this when you need an experiment to reproduce months later — pinning
+> models and data, the run manifest, and honest limits on determinism.
 
 ## 3 a.m. story
 

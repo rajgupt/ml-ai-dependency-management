@@ -1,6 +1,9 @@
 # M8 · Supply chain & upgrade hygiene 🟢🔵🔴
 
-> ⏱ 12 minutes · Route: Full
+> ⏱ 12 minutes · **Optional deep-dive** — not on the core path
+>
+> Read this when you own a repo's dependencies — auditing, SBOMs, private-index
+> safety, and the eval-gated upgrade ritual.
 
 ## 3 a.m. story
 
