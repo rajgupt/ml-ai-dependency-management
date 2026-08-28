@@ -13,7 +13,7 @@
 | **Subtitle** | Stop shipping "works on my machine" models. |
 | **Audience** | Working data scientists, ML engineers, MLOps/platform engineers. Mixed seniority (0–15 yrs). |
 | **Prereqs** | Can write Python, has used `pip` and a notebook. No packaging knowledge assumed. |
-| **Duration** | **≤ 3 hours** total. Core path ≈ 155 min; Lab 3 is a 25-min stretch/take-home. |
+| **Duration** | **≤ 3 hours** total. Core path ≈ 130 min; M6 (GPU/CUDA) is an optional ~25-min deep-dive. |
 | **Format** | Self-paced, read-and-do. Every module ends in a copy-pasteable **Recipe Card**. |
 | **Promise** | By the end you can bootstrap, package, lock and audit an ML project — and hand it to a colleague who reproduces it on the first try. |
 
@@ -35,9 +35,12 @@ Each recipe carries a level badge, and the ToC offers three routes:
 
 | Route | Who | Time | Path |
 |---|---|---|---|
-| **Full** | DS/MLE new to packaging | ~3 h | M0 → M8 + Labs 1–3 |
-| **Fast** | Senior engineers | ~75 min | M2, M4, M6 + Lab 1 + Checklist |
+| **Full** | DS/MLE new to packaging | ~3 h | M0 → M8 + Labs 1–2 |
+| **Fast** | Senior engineers | ~75 min | M2, M4 + Lab 1 + Checklist |
 | **Notebook-first** | Analysts / researchers | ~90 min | M0, M1, M2, Lab 1, M5, M7 |
+
+**M6 · GPUs, CUDA & non-Python dependencies** sits outside these routes as an
+optional deep-dive — read it when a GPU/CUDA/system-library problem actually bites.
 
 ---
 
@@ -68,7 +71,7 @@ Install `uv`. Run one command that creates a fully pinned, GPU-aware environment
 
 **M3 · 🧪 Lab 1 — "Zero to reproducible in ten commands"** — 20 min 🟢
 
-### Part II — Make it yours *(60 min)*
+### Part II — Make it yours *(45 min)*
 
 **M4 · Ship your project as a package** — 25 min 🔵
 *Concepts & recipes:*
@@ -81,16 +84,7 @@ Install `uv`. Run one command that creates a fully pinned, GPU-aware environment
 
 **M5 · 🧪 Lab 2 — "Notebook → installable package"** — 20 min 🟢🔵
 
-**M6 · Hard mode: GPUs, CUDA and non-Python dependencies** — 25 min 🔵🔴
-The module that makes the course ML-specific rather than generic Python.
-*Concepts & recipes:*
-- CUDA **driver vs runtime vs toolkit**; what `nvidia-smi` actually tells you; why `pip install torch` gives one teammate a 2 GB CPU build and another a broken CUDA build.
-- **Wheel tags & environment markers** (PEP 508): `cp312-manylinux_x86_64` vs `macosx_arm64` — "installs on my Mac, fails on the cluster", explained in one table.
-- Recipe: pin a torch variant with `[[tool.uv.index]] explicit = true` + `[tool.uv.sources]`, and a marker-split so laptops get CPU wheels and the cluster gets `cu128`. Note the sharp edge: `--torch-backend=auto` works with `uv pip …`, not with `uv add/lock/sync`.
-- **Non-Python dependencies** (ffmpeg, libGL, tesseract, NCCL, MKL): decision tree → *system package* vs *conda/**pixi*** vs *deploy image*. One page, no religion.
-- **Deploy-image recipe (concepts only, no Dockerfile):** install deps from the lockfile before the project source for a cached dependency layer (`uv sync --frozen --no-dev --no-install-project`), slim runtime image, separate **train vs serve** environments (your serving image should not contain Jupyter), base image pinned by digest not tag. 🔴
-
-### Part III — Make it survive *(40 min + stretch lab)*
+### Part III — Make it survive *(40 min)*
 
 **M7 · Reproducibility beyond pip** — 15 min 🟢
 *Concepts & recipes:*
@@ -107,16 +101,26 @@ The module that makes the course ML-specific rather than generic Python.
 - **Upgrade ritual**: Renovate/Dependabot on a schedule, `uv lock --upgrade-package X`, review the lock diff like code, canary env + eval-set regression check before merging a `transformers` bump.
 - Pinning policy: when upper bounds help and when they poison the ecosystem (linked debate, both sides).
 
-**M9 · 🧪 Lab 3 (stretch / take-home) — "Ship it and keep it alive"** — 25 min 🔵🔴
-
 **M10 · Recipe index + Dependency Health Checklist** — 3 min 🟢
 Every recipe card collected on one page + a scored checklist to run against a real repo.
 
-**Core total: 155 min. With Lab 3: 180 min.**
+### Optional deep-dives *(not on the core path)*
+
+**M6 · Hard mode: GPUs, CUDA and non-Python dependencies** — 25 min 🔵🔴
+The module that makes the course ML-specific rather than generic Python. Read it
+when a GPU, CUDA, or system-library problem actually bites.
+*Concepts & recipes:*
+- CUDA **driver vs runtime vs toolkit**; what `nvidia-smi` actually tells you; why `pip install torch` gives one teammate a 2 GB CPU build and another a broken CUDA build.
+- **Wheel tags & environment markers** (PEP 508): `cp312-manylinux_x86_64` vs `macosx_arm64` — "installs on my Mac, fails on the cluster", explained in one table.
+- Recipe: pin a torch variant with `[[tool.uv.index]] explicit = true` + `[tool.uv.sources]`, and a marker-split so laptops get CPU wheels and the cluster gets `cu128`. Note the sharp edge: `--torch-backend=auto` works with `uv pip …`, not with `uv add/lock/sync`.
+- **Non-Python dependencies** (ffmpeg, libGL, tesseract, NCCL, MKL): decision tree → *system package* vs *conda/**pixi*** vs *deploy image*. One page, no religion.
+- **Deploy-image recipe (concepts only, no Dockerfile):** install deps from the lockfile before the project source for a cached dependency layer (`uv sync --frozen --no-dev --no-install-project`), slim runtime image, separate **train vs serve** environments (your serving image should not contain Jupyter), base image pinned by digest not tag. 🔴
+
+**Core total: 130 min. M6 optional deep-dive: +25 min.**
 
 ---
 
-## 3. The three tutorials
+## 3. The two tutorials
 
 Each lab: a starting repo branch, a 20-line brief, checkpoints with expected output, a "break it on purpose" step, and a solution branch.
 
@@ -137,12 +141,6 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 4. Point the notebook at the installed package (register the kernel, delete the `sys.path` hack), add `nbstripout`.
 5. `uv build`, then install the wheel into a throwaway env and import it — proof the packaging is real.
 *Learner walks away with:* the pip-installable project pattern, ready to copy onto their own repo.
-
-### 🧪 Lab 3 — Ship it and keep it alive *(25 min, stretch, 🔵🔴)*
-1. Add `torch` with a CPU/GPU index split so laptop and cluster resolve differently from **one** lockfile.
-2. GitHub Actions: cached `uv sync --locked` (fails the build if the lock is stale) + `pytest` + `pip-audit` + CycloneDX SBOM upload.
-3. Run `uv lock --upgrade-package scikit-learn`, read the lock diff, and fix the deliberately planted breakage.
-*Learner walks away with:* a CI template and the upgrade ritual.
 
 ---
 
@@ -167,13 +165,12 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 ├── SUMMARY.md                ← GitBook/HonKit table of contents
 ├── docs/
 │   ├── 00-setup.md … 10-recipe-index.md
-│   ├── labs/{lab-1,lab-2,lab-3}.md
+│   ├── labs/{lab-1,lab-2}.md
 │   ├── appendix/{cheatsheet,checklist,glossary,further-reading,tool-comparison}.md
 │   └── assets/               ← four-layer diagram, wheel-tag table, decision trees
 ├── examples/
 │   ├── lab1-bootstrap/{starter,solution}/
-│   ├── lab2-package/{starter,solution}/
-│   └── lab3-ship/{starter,solution}/
+│   └── lab2-package/{starter,solution}/
 └── .github/workflows/{book.yml,test-examples.yml}
 ```
 
@@ -190,11 +187,11 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 * Part II — Make it yours
   * [M4 · Ship your project as a package](docs/04-packaging.md)
   * [🧪 Lab 2 · Notebook → package](docs/labs/lab-2.md)
-  * [M6 · GPUs, CUDA & non-Python deps](docs/06-gpu-and-system-deps.md)
 * Part III — Make it survive
   * [M7 · Reproducibility beyond pip](docs/07-reproducibility.md)
   * [M8 · Supply chain & upgrade hygiene](docs/08-supply-chain.md)
-  * [🧪 Lab 3 · Ship it and keep it alive](docs/labs/lab-3.md)
+* Optional deep-dives
+  * [M6 · GPUs, CUDA & non-Python deps](docs/06-gpu-and-system-deps.md)
 * Appendix
   * [Recipe index](docs/10-recipe-index.md)
   * [Dependency Health Checklist](docs/appendix/checklist.md)
@@ -246,7 +243,7 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 | Phase | Output | Est. | Status |
 |---|---|---|---|
 | 1 | Repo scaffold: `SUMMARY.md`, `book.json`, empty module pages with the page template, CI skeleton | 0.5 d | **done** |
-| 2 | Example repos for Labs 1–3 (starter + solution branches), tested end-to-end | 1.5 d | Labs 1–2 **done**, Lab 3 pending |
+| 2 | Example repos for Labs 1–2 (starter + solution branches), tested end-to-end | 1.5 d | Labs 1–2 **done** |
 | 3 | Write Parts I–III against the labs (labs first, prose second — keeps it practical) | 3 d | outlines in place |
 | 4 | Diagrams (four-layer stack, wheel tags, non-Python decision tree), checklist, cheat sheet | 1 d | not started |
 | 5 | PDF pipeline + link/command CI, timing dry-run with 2 pilot readers | 0.5 d | CI **done**, dry-run pending |
@@ -257,5 +254,5 @@ Given `notebooks/churn_messy.ipynb` (with `sys.path` hacks, `!pip install`, hidd
 
 1. **Host:** GitBook.com Git Sync (recommended) vs self-hosted HonKit only?
 2. **Lab domain:** tabular churn model (fast, tiny deps) — recommended — vs a small LLM fine-tune (more relatable, much heavier downloads and GPU-dependent).
-3. **Lab 3 GPU access:** assume none and teach the marker split as *configuration only* (recommended, keeps it laptop-runnable), or provide a Colab/cloud path?
+3. **M6 GPU access:** assume none and teach the marker split as *configuration only* (recommended, keeps it laptop-runnable), or provide a Colab/cloud path?
 4. **Windows/WSL support** in the labs: first-class or "use WSL"?

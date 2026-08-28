@@ -35,7 +35,8 @@ The one-sentence version, worth remembering more than anything else in this
 module: **most ML dependency pain lives below the layer pip controls**, which
 is why "just pin your requirements" is advice that keeps failing you. Every
 module after this one will tell you which layer it's operating on — M2 owns
-layers 3–4, M6 is the one that finally goes below the line.
+layers 3–4, and the optional [M6](06-gpu-and-system-deps.md) deep-dive is the
+one that finally goes below the line.
 
 ### Abstract vs concrete dependencies
 

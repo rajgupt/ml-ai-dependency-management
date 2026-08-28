@@ -13,8 +13,8 @@ This book fixes those, in under three hours, with commands you can paste.
 
 ## What you get
 
-- **8 short modules**, one theory chapter, everything else recipes
-- **3 hands-on labs** with starter and solution repos that actually run
+- **6 short core modules**, one theory chapter, everything else recipes — plus an optional GPU/CUDA deep-dive
+- **2 hands-on labs** with starter and solution repos that actually run
 - A **[Dependency Health Checklist](docs/appendix/checklist.md)** to score your own repo on Monday
 - A **[recipe index](docs/10-recipe-index.md)** and a **[uv cheat sheet](docs/appendix/cheatsheet.md)** to keep
 
@@ -47,7 +47,6 @@ requirements" keeps failing you, and it's the idea every module hangs off.
 |---|---|---|
 | [1 · Zero to reproducible](docs/labs/lab-1.md) | A locked environment you destroy and rebuild byte-for-byte | 20 min |
 | [2 · Notebook → package](docs/labs/lab-2.md) | A messy notebook refactored into a pip-installable package | 20 min |
-| [3 · Ship it and keep it alive](docs/labs/lab-3.md) | GPU/CPU split from one lockfile, CI, an upgrade that breaks | 25 min |
 
 Code lives in [`examples/`](examples/lab1-bootstrap/starter/README.md). Every solution is built and run in CI, so
 the commands in this book are not aspirational.
@@ -63,8 +62,8 @@ Under construction. [`COURSE-PLAN.md`](COURSE-PLAN.md) is the curriculum design.
 | Curriculum, timings, reading list | done |
 | Book scaffold, `SUMMARY.md`, PDF pipeline | done |
 | Labs 1 & 2 — briefs and working example repos | done |
-| Lab 3 — brief written, example repo | brief only |
 | Modules M0–M8 — outlines in place, prose | outlines only |
+| M6 (optional GPU/CUDA deep-dive) — outline | outline only |
 
 ## Building the book locally
 
