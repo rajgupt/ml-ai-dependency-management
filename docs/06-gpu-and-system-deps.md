@@ -14,87 +14,308 @@ The lockfile is not lying — `torch` on PyPI is not one package.*
 
 ### Driver vs runtime vs toolkit
 
-<!-- WRITE: ~180 words + a small diagram.
-     - GPU driver: on the host, installed by ops, NOT pip-installable. `nvidia-smi` shows it.
-     - CUDA runtime: ships inside the torch wheel (or the base image). Pip-installable.
-     - CUDA toolkit (nvcc): only needed to COMPILE custom kernels.
-     Key rule to state loudly: the driver must be >= what the wheel's CUDA runtime needs.
-     That's the constraint no lockfile can express, and the reason the story above happens.
-     Explain what `nvidia-smi`'s "CUDA Version" actually means (max supported by the driver,
-     not what's installed) — this single misreading causes a lot of wasted hours. -->
+Three different things share the name "CUDA," and confusing them is where
+the 3 a.m. story starts.
+
+```
+Layer 1  GPU driver     ← on the host, installed by ops/IT, NOT pip-installable
+Layer 2  CUDA runtime   ← ships INSIDE the torch wheel (or the base image)
+(dev)    CUDA toolkit   ← nvcc + headers, only needed to COMPILE custom kernels
+```
+
+- **Driver.** Lives on the machine, talks to the physical GPU, installed once
+  by whoever owns the box (or baked into the cloud image). `uv` cannot
+  install it, `pip` cannot install it, and no `pyproject.toml` can pin it —
+  it's below the layer any Python tool controls.
+- **CUDA runtime.** The shared libraries (`libcudart`, `libcublas`, `libcudnn`,
+  …) that a GPU-enabled `torch` wheel actually calls at runtime. A
+  `torch==2.6.0+cu128` wheel *contains its own copy* of this — that's most of
+  why the wheel is 2+ GB. This part is pip-installable, and it's what `uv
+  add torch` actually pulls in.
+- **CUDA toolkit.** `nvcc`, headers, profilers — only needed if you're
+  compiling a custom CUDA kernel or building a package like `flash-attn` from
+  source. Most ML engineers never install this directly.
+
+The rule that matters: **the driver's supported CUDA version must be ≥ the
+CUDA version the wheel's runtime was built against.** A lockfile can pin the
+torch wheel exactly and still be useless on a machine whose driver is too old
+— that constraint lives in layer 1, which no `uv.lock` line can express. This
+is exactly the 3 a.m. story: same lockfile, same wheel, one machine's driver
+is new enough and one isn't.
+
+`nvidia-smi` is the tool for reading layer 1 — but read it carefully. The
+"CUDA Version" in its top-right corner is the *newest* CUDA runtime that
+driver can support, not a runtime that's actually installed. Seeing
+"CUDA Version: 12.4" doesn't mean nothing higher is on the box, and it
+doesn't mean a `cu124`-tagged wheel is what's running — it's a ceiling, not a
+version report. Reading it as "what's installed" is the single most common
+misreading in this whole area, and it costs people hours chasing a mismatch
+that was never there.
 
 ### Wheel tags and environment markers
 
-<!-- WRITE: decode `torch-2.6.0-cp312-cp312-manylinux_2_28_x86_64.whl` field by field.
-     Then PEP 508 markers as the tool for "different platforms, different dependency":
-       sys_platform, platform_machine, python_version.
-     Table: mac arm64 / linux x86_64 / linux aarch64 → what resolves.
-     This is the "installs on my Mac, fails on the cluster" explanation in one page. -->
+A wheel filename is a compatibility contract. Take
+`torch-2.6.0-cp312-cp312-manylinux_2_28_x86_64.whl` apart:
+
+| Field | Value | Means |
+|---|---|---|
+| distribution-version | `torch-2.6.0` | package and version |
+| Python tag | `cp312` | built for CPython 3.12 |
+| ABI tag | `cp312` | binary-compatible with CPython 3.12's C ABI |
+| platform tag | `manylinux_2_28_x86_64` | a Linux glibc ≥ 2.28, x86-64 |
+
+Change any field and it's a different wheel, built separately: `cp311` for
+Python 3.11, `macosx_11_0_arm64` for Apple Silicon, `manylinux…aarch64` for
+Graviton or Jetson. That's why "installs on my Mac, fails on the cluster" is
+so common — the resolver isn't choosing wrong, it's correctly picking the
+one wheel that matches *your* machine, and your machine and the cluster are
+different tags.
+
+[PEP 508](https://peps.python.org/pep-0508/) markers are how you tell a
+resolver "different platform, different dependency" *inside one
+`pyproject.toml`*, instead of maintaining separate requirement files per
+platform:
+
+| Marker | Answers | Typical use in ML |
+|---|---|---|
+| `sys_platform` | `"linux"`, `"darwin"`, `"win32"` | route macOS to a CPU wheel, Linux to a CUDA one |
+| `platform_machine` | `"x86_64"`, `"arm64"`, `"aarch64"` | tell a cluster x86 box apart from a Jetson or Apple Silicon laptop |
+| `python_version` | `"3.11"`, `"3.12"`, … | drop a dependency that doesn't yet support your interpreter |
+
+| Machine | `sys_platform` | `platform_machine` | typically resolves to |
+|---|---|---|---|
+| MacBook (Apple Silicon) | `darwin` | `arm64` | CPU-only torch wheel |
+| Training cluster node | `linux` | `x86_64` | `cu128` (or whichever CUDA build) torch wheel |
+| ARM inference box / Jetson | `linux` | `aarch64` | a Linux ARM wheel, if one is published — often not for GPU builds |
+
+One `pyproject.toml`, one `uv.lock`, and every platform in that table
+resolves to the wheel that actually fits it. Recipe 2 below is exactly this
+table turned into config.
 
 ## 🍳 Recipe 1 — pin a torch variant explicitly
 
-<!-- WRITE: the [[tool.uv.index]] + [tool.uv.sources] pattern.
+PyPI's default `torch` wheel is a lowest-common-denominator CPU build. To get
+a CUDA build, point `uv` at PyTorch's own index, and pin `torch` to it:
 
-     [[tool.uv.index]]
-     name = "pytorch-cu128"
-     url = "https://download.pytorch.org/whl/cu128"
-     explicit = true          # ← only packages that ask for it use this index
+```toml
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
-     [tool.uv.sources]
-     torch = { index = "pytorch-cu128" }
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+```
 
-     Explain why `explicit = true` matters: without it the index is in scope for EVERY
-     package, which is a dependency-confusion risk and a resolution slowdown.
-     Backends available: cpu, cu118, cu126, cu128, cu130, rocm6.4, xpu. -->
+`explicit = true` is not decoration. Without it, this index is in scope for
+*every* package in the resolution, not just `torch` — which is both a
+resolution slowdown (uv now checks a second index for every dependency) and a
+dependency-confusion risk (a same-named package could resolve from an index
+you didn't intend for it). `explicit = true` restricts the index to packages
+that name it in `[tool.uv.sources]` — here, only `torch`.
+
+PyTorch publishes a matching index per backend: `cpu`, `cu118`, `cu126`,
+`cu128`, `cu130`, `rocm6.4`, `xpu`. Swap the `url` to change which build your
+project locks to.
 
 ## 🍳 Recipe 2 — one lockfile, CPU laptops and GPU cluster
 
-<!-- WRITE: the marker split — the recipe people actually come here for.
-     torch from the cpu index when sys_platform == "darwin", from cu128 on linux x86_64.
-     Show the full pyproject block and then `uv lock` + `uv sync` on both machines.
-     Emphasise: ONE lockfile, resolved for all platforms. That's what "universal lock" buys you. -->
+The recipe people actually come here for: laptops get a small CPU wheel,
+the cluster gets the CUDA build, and it's all one `pyproject.toml` and one
+`uv.lock`.
+
+```toml
+[project]
+dependencies = ["torch>=2.6"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+]
+```
+
+```bash
+uv lock
+```
+
+Run that once and `uv.lock` records *both* resolutions — the CPU wheel for
+`darwin` and the `cu128` wheel for `linux`/`x86_64` — in the same file. Then:
+
+```bash
+# on a MacBook
+uv sync        # installs the CPU wheel, ~200 MB
+
+# on the training cluster
+uv sync        # installs the cu128 wheel, same lockfile, no re-resolution
+```
+
+That's what "universal lock" buys you: `uv.lock` isn't resolved for *your*
+machine, it's resolved for every platform your markers cover, up front. A
+teammate on either side of that split runs the same `uv sync` and gets the
+right torch, with nobody hand-editing a requirements file per machine.
 
 ## ⚠️ Sharp edge — `--torch-backend=auto`
 
-<!-- WRITE: uv can detect the installed driver and pick the index automatically:
-       uv pip install torch --torch-backend=auto
-     But it works with `uv pip install/compile/sync`, `uv tool run/install` — NOT with
-     `uv add`, `uv lock`, `uv sync`. So it's great for a throwaway box or a Dockerfile
-     RUN line, and NOT a substitute for the marker split in a locked project.
-     Get this wrong and you'll think the project config is broken. -->
+`uv` can also detect the installed driver and pick a matching backend for
+you, live:
+
+```bash
+uv pip install torch --torch-backend=auto
+```
+
+This is genuinely useful — but only inside `uv pip install`, `uv pip
+compile`, `uv pip sync`, and `uv tool run`/`uv tool install`. It does **not**
+work with `uv add`, `uv lock`, or `uv sync`. Those commands resolve a
+*project*, meant to be reproduced on other machines by other people; "detect
+what's on this machine" is the opposite of that guarantee, so uv doesn't
+apply it there.
+
+Use `--torch-backend=auto` on a throwaway box, in a one-off Dockerfile `RUN`
+line, or when you're not tracking a `pyproject.toml` at all. Inside a locked
+project, use the marker split from Recipe 2 instead. Reach for `auto` inside
+`uv add`/`uv sync` and nothing happens the way you expect — it's silently
+ignored there, not an error — and it looks exactly like a broken project
+config until you know this distinction.
 
 ## 🍳 Recipe 3 — non-Python dependencies: the decision tree
 
-<!-- WRITE: ffmpeg, libGL, tesseract, NCCL, MKL, system fonts, GDAL.
-     A decision tree, one page, no religion:
+`ffmpeg`, `libGL`, `tesseract`, NCCL, MKL, system fonts, GDAL — none of these
+are Python packages, so none of them belong in `pyproject.toml`. Work through
+these questions in order:
 
-       Is there a manylinux wheel that vendors it?          → just use pip/uv. Done.
-       Do you control the machine (or the image)?           → system package (apt/brew) + document it.
-       Do you need a non-Python solver stack, cross-platform, without root?
-                                                            → pixi / conda-forge (+ conda-lock)
-       Is it a deploy target?                               → container. Always container.
+1. **Does a wheel already vendor it?** Many packages ship the C library
+   inside the wheel so you never see the gap — `opencv-python-headless`
+   bundles its own `libopencv`; some `tesseract`/`pdf` bindings do too. Check
+   first (`pip show`, or just try the import) before assuming you need a
+   system install at all.
+2. **Do you control the machine or the image?** If yes — your laptop, your
+   base Docker image — install it as a system package (`apt install ffmpeg
+   libgl1`, `brew install tesseract`) and write down the command in a
+   Dockerfile or setup script. Simple, and it's how most teams should default.
+3. **Do you need a solver-managed, cross-platform stack without root** —
+   CUDA/NCCL/MKL/BLAS versions that have to match each other exactly, on
+   machines you don't administer? Reach for **pixi** or **conda-forge**
+   (locked with **conda-lock**). This is the one case plain `apt`/`brew`
+   genuinely doesn't cover: a non-Python dependency solver.
+4. **Is this a deploy target, not a dev machine?** Container. Always
+   container — see Recipe 4. Don't try to make a serving host's system
+   packages match a laptop's by hand; bake the image instead.
 
-     State the mixing rule: if you use conda, install as much as possible from conda,
-     and pip only at the very end, and lock both. Half-conda-half-pip environments
-     are the single most common irreproducible ML env. -->
+**The mixing rule, stated once:** if you're using conda/pixi at all, install
+*as much as possible* from it — Python included — and use `pip`/`uv pip`
+only for the last few packages conda-forge doesn't carry, then lock both
+layers. A half-conda-half-pip environment where both tools think they own
+the same packages is the single most common irreproducible ML environment
+there is. If you're not already committed to conda for a real reason (step 3
+above), skip it — plain `uv` plus system packages is simpler and reproduces
+better.
 
 ## 🍳 Recipe 4 — the Dockerfile 🔵🔴
 
-<!-- WRITE: annotated multi-stage build.
-     - Base image pinned BY DIGEST, not tag.
-     - Dependency layer built with `uv sync --frozen --no-install-project --no-dev`
-       BEFORE copying source → source edits don't bust the dependency cache. Explain the
-       layer-cache reasoning; this is the trick that takes CI builds from 6 min to 40 s.
-     - Then copy src, `uv sync --frozen --no-dev`.
-     - Runtime stage: copy the venv, no build tools, no jupyter.
-     - Train vs serve images: different extras, different base, different size. Show both
-       numbers — the size difference is the argument.
-     - ENTRYPOINT uses the console script from M4. -->
+```dockerfile
+# --- deps stage: resolve + install dependencies, cached separately from source ---
+FROM python:3.12-slim@sha256:6f2e...ab13 AS deps
+COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /uvx /usr/local/bin/
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+# --- build stage: add source, install the project itself ---
+FROM deps AS build
+COPY src/ src/
+RUN uv sync --frozen --no-dev
+
+# --- runtime: nothing but the venv and the source ---
+FROM python:3.12-slim@sha256:6f2e...ab13 AS train
+WORKDIR /app
+COPY --from=build /app/.venv .venv
+COPY --from=build /app/src src
+ENV PATH="/app/.venv/bin:$PATH"
+ENTRYPOINT ["churn-train"]
+```
+
+Two things do the real work here.
+
+**Base image pinned by digest, not tag.** `python:3.12-slim` is a moving
+target — the same tag points at a different image next week when a base-OS
+patch lands. `python:3.12-slim@sha256:...` is immutable: that digest is that
+exact image, forever. Resolve the digest once (`docker pull python:3.12-slim
+&& docker inspect --format='{{index .RepoDigests 0}}' python:3.12-slim`) and
+commit it like you'd commit a lockfile — because it is one, for layer 1 of
+the stack.
+
+**The dependency layer is copied and installed *before* source.**
+`COPY pyproject.toml uv.lock ./` then `uv sync --frozen --no-install-project`
+installs every dependency but deliberately skips the project itself
+(`--no-install-project`) — there's no source yet to install. Docker caches
+layers by their inputs, so as long as `pyproject.toml`/`uv.lock` don't
+change, that layer is reused untouched no matter how many times `src/`
+changes. Only the `build` stage — the one that actually copies `src/` — reruns
+on every code edit, and it's fast because dependencies are already sitting in
+the venv from the cached layer. This one reordering is what takes a CI build
+from "6 minutes, every time" to "40 seconds, most of the time." Get the
+`COPY` order backwards — source before deps — and every commit invalidates
+every layer.
+
+`--frozen` means install exactly what's in `uv.lock`, no re-resolution;
+`--no-dev` drops the `dev` group (pytest, ruff — see [M4](04-packaging.md)
+and [M2](02-uv.md)) so it never reaches the image at all.
+
+**Train vs serve are different images, not the same image with more in it.**
+The runtime stage above copies only the venv and `src/` — no compiler, no
+`uv`, no Jupyter, nothing from the `dev` or `notebook` groups. A serving
+image narrows further still: skip the `[gpu]`/training-only extras it
+doesn't need, and its `ENTRYPOINT` calls a `serve` console script instead of
+`churn-train`. The difference shows up on disk — a training image carrying
+CUDA wheels and dev tooling commonly runs 6–8 GB; a slim CPU inference image
+built the same way can sit under 500 MB. Every package in that gap is attack
+surface and pull-time you're paying for on every replica, for no reason a
+serving request ever uses.
+
+`ENTRYPOINT ["churn-train"]` — not `["python", "src/cli.py"]` — is the same
+console script from [M4 Recipe 4](04-packaging.md): it exists because the
+package is installed, it's versioned with the image, and it doesn't care
+what `WORKDIR` Docker happened to leave you in.
 
 ## ✅ Check yourself
 
-<!-- WRITE: Q1: `nvidia-smi` says CUDA 12.4. Can you install a cu128 torch wheel? What actually decides?
-           Q2: Why won't `--torch-backend=auto` help inside `uv sync`? -->
+<details>
+<summary><code>nvidia-smi</code> reports "CUDA Version: 12.4". Can you install a <code>cu128</code>-tagged torch wheel? What actually decides?</summary>
+
+Probably not directly relevant to whether it's *allowed* — but the number
+you read is a ceiling, not an installed version: it's the newest CUDA
+runtime that driver supports, not what's currently on the box. What decides
+whether a `cu128` wheel will actually run is whether the driver supports CUDA
+≥ 12.8. A driver reporting 12.4 as its max does not support a wheel built
+against 12.8's runtime — you'd need to upgrade the driver first, or install a
+`cu124`-or-lower build instead. `nvidia-smi`'s number tells you the upper
+bound to pin against, not a version already sitting on the machine.
+</details>
+
+<details>
+<summary>Why won't <code>--torch-backend=auto</code> help inside <code>uv sync</code>?</summary>
+
+Because `--torch-backend=auto` is a flag on uv's pip-compatible commands
+(`uv pip install/compile/sync`) and on `uv tool run`/`install` — it detects
+the driver on *this* machine and picks a matching index live. `uv add`,
+`uv lock`, and `uv sync` resolve and reproduce a *project*, meant to install
+identically on every machine that runs it, so uv doesn't substitute
+"whatever this machine happens to have" into that resolution. Getting a
+CPU/GPU split inside a locked project means declaring it explicitly with the
+`[tool.uv.sources]` marker split from Recipe 2, not this flag.
+</details>
 
 ## 📖 Go deeper
 
