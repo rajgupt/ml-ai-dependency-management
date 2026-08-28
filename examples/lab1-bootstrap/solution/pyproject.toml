@@ -1,0 +1,15 @@
+[project]
+name = "lab1-churn"
+version = "0.1.0"
+description = "Lab 1 - a reproducible ML environment in ten commands."
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]

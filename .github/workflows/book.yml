@@ -1,0 +1,75 @@
+name: book
+
+# Builds the HTML book and the downloadable PDF with HonKit -- the maintained fork
+# of GitBook Legacy, which reads the same SUMMARY.md and book.json. GitBook.com
+# hosting (via Git Sync) is configured outside this repo; this workflow produces
+# the offline PDF and catches broken book structure.
+#
+# This used to run inside `ghcr.io/honkit/honkit:latest`, which the runner cannot
+# pull ("Error response from daemon: denied"). Node on the runner plus calibre
+# from apt is the same toolchain without the registry dependency: honkit shells
+# out to calibre's `ebook-convert` for the PDF.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  # A book about pinning dependencies pins its own.
+  HONKIT_VERSION: 6.2.2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install --no-save "honkit@${HONKIT_VERSION}"
+
+      - name: Build HTML
+        run: npx honkit build . _book
+
+      # calibre provides ebook-convert. --no-install-recommends keeps it to ~2 min.
+      - name: Install the PDF toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends calibre
+
+      - name: Build PDF
+        run: npx honkit pdf . dependency-cookbook.pdf
+
+      - name: Check the PDF is not empty
+        run: |
+          test -s dependency-cookbook.pdf
+          ls -lh dependency-cookbook.pdf
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-cookbook
+          path: |
+            _book/
+            dependency-cookbook.pdf
+
+      - name: Attach the PDF to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dependency-cookbook.pdf
+
+  links:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --accept 200,206,429 './**/*.md'
+          fail: true

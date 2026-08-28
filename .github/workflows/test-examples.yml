@@ -1,0 +1,81 @@
+name: examples
+
+# The cookbook's promise is that every command in it works. This is how we keep
+# that true: the lab solutions are built and run on every change.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lab1:
+    name: Lab 1 · bootstrap
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/lab1-bootstrap/solution
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # --locked, not --frozen: fail if pyproject.toml and uv.lock disagree.
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run python train.py
+      # NOTE: `uv run pytest` is expected to FAIL here. That is step 8 of Lab 1 --
+      # the project is not installable, so the test cannot import it. Lab 2 fixes it.
+      - name: Lab 1's deliberate failure is still deliberate
+        run: |
+          if uv run pytest -q 2>/dev/null; then
+            echo "::error::Lab 1's pytest now passes. The Lab 1 -> Lab 2 cliffhanger is broken."
+            exit 1
+          fi
+          echo "Confirmed: tests still fail to import, as the lab describes."
+
+  lab2:
+    name: Lab 2 · package
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/lab2-package/solution
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      - run: uv run churn-train --rows 4000
+      - run: uv build
+      # Prove the wheel is genuinely installable outside the source tree.
+      - name: Install the wheel into a clean environment
+        run: |
+          cd "$(mktemp -d)"
+          uv venv proof --python 3.12
+          uv pip install --python proof "$GITHUB_WORKSPACE"/examples/lab2-package/solution/dist/churnkit-*.whl
+          ./proof/bin/churn-train --rows 2000
+
+  no-sys-path:
+    name: No sys.path hacks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The starter notebook is allowed to be bad -- that is the lesson. Nothing else is.
+      #
+      # Two details this guard got wrong the first time, both worth keeping:
+      #   * the trailing "(" -- the labs *discuss* sys.path.append in prose, and a guard
+      #     that cannot tell a call from a sentence fails on its own documentation;
+      #   * git grep, not grep -r -- it searches tracked files only, so a local .venv
+      #     full of pytest's own sys.path handling can never trip it.
+      - name: Fail if a solution reintroduces a sys.path hack
+        run: |
+          if git grep -n "sys\.path\.\(append\|insert\)(" -- \
+              'examples/*/solution/**/*.py' 'examples/*/solution/**/*.ipynb'; then
+            echo "::error::A solution contains a sys.path hack. That is the thing the book tells people to delete."
+            exit 1
+          fi
+          echo "Clean."
